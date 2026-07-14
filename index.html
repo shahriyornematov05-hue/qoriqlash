@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qo'riqlash Xizmati</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f4f7f6; padding: 20px; }
+        .menu { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+        .btn { background: white; border: 1px solid #ddd; padding: 20px; border-radius: 15px; width: 120px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; }
+        .btn:hover { background: #e0f7fa; }
+        #form-container { background: white; padding: 25px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; margin-top: 20px; }
+        input { display: block; margin: 10px auto; padding: 12px; width: 250px; border: 1px solid #ccc; border-radius: 8px; }
+        button { padding: 12px 25px; background-color: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h2>🛡 Qo'riqlash xizmati</h2>
+
+    <div class="menu">
+        <div class="btn" onclick="showForm('Объект')">🏢<br>Объект</div>
+        <div class="btn" onclick="showForm('KTS Хонадон')">🏠<br>Хонадон</div>
+        <div class="btn" onclick="showForm('Login')">🔑<br>Login</div>
+    </div>
+
+    <div id="form-container" style="display:none;">
+        <h3 id="form-title"></h3>
+        <input type="text" id="fish" placeholder="F.I.Sh">
+        <input type="text" id="manzil" placeholder="Manzil">
+        <input type="text" id="tel" placeholder="Telefon">
+        <button onclick="sendData()">Yuborish</button>
+    </div>
+
+    <script>
+        function showForm(title) {
+            document.getElementById('form-container').style.display = 'inline-block';
+            document.getElementById('form-title').innerText = title;
+        }
+
+        function sendData() {
+            const token = "8751782403:AAFs6k5ZW-U2ZOMi8XsSgG5CrAfsqHoBL9U";
+            const chatId = "-1003982845920";
+            const type = document.getElementById('form-title').innerText;
+            const fish = document.getElementById('fish').value;
+            const manzil = document.getElementById('manzil').value;
+            const tel = document.getElementById('tel').value;
+
+            if(!fish || !manzil || !tel) { alert("Iltimos, barcha kataklarni to'ldiring!"); return; }
+
+            const text = `Yangi buyurtma:%0ATuri: ${type}%0AФИШ: ${fish}%0AМанзил: ${manzil}%0AТелефон: ${tel}`;
+            const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${text}`;
+
+            fetch(url).then(() => {
+                alert("Ma'lumot muvaffaqiyatli yuborildi!");
+                document.getElementById('form-container').style.display = 'none';
+            });
+        }
+    </script>
+</body>
+</html>
