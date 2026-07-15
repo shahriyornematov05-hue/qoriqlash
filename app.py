@@ -1,4 +1,3 @@
-
 import asyncio
 import hashlib
 import hmac
@@ -7,7 +6,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, quote
 
 import uvicorn
 from aiogram import Bot, Dispatcher, F, Router
@@ -68,6 +67,32 @@ def verify_init_data(init_data:str)->dict:
     user=json.loads(data.get("user","{}"))
     return user
 
+
+def make_launch_auth(user_id:int)->str:
+    raw=str(user_id)
+    signature=hmac.new(BOT_TOKEN.encode(),raw.encode(),hashlib.sha256).hexdigest()
+    return f"{raw}.{signature}"
+
+def verify_launch_auth(auth:str)->int:
+    try:
+        raw_uid,received_signature=auth.split(".",1)
+        expected_signature=hmac.new(
+            BOT_TOKEN.encode(),raw_uid.encode(),hashlib.sha256
+        ).hexdigest()
+        if not hmac.compare_digest(expected_signature,received_signature):
+            raise ValueError
+        return int(raw_uid)
+    except (ValueError,AttributeError):
+        raise HTTPException(401,"WebApp kirish kaliti noto'g'ri")
+
+def resolve_user_id(init_data:str="",auth:str="")->int:
+    if init_data:
+        user=verify_init_data(init_data)
+        return int(user["id"])
+    if auth:
+        return verify_launch_auth(auth)
+    raise HTTPException(401,"Telegram ma'lumotlari kelmadi")
+
 def approver_keyboard(record_id:int):
     return InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text="✅ ULANDI",callback_data=f"ok:{record_id}"),
@@ -80,9 +105,12 @@ def register_keyboard(user_id:int):
         InlineKeyboardButton(text="❌ Rad etish",callback_data=f"ur:{user_id}")
     ]])
 
-def app_keyboard():
+def app_keyboard(user_id:int):
+    base_url=WEBAPP_URL or "http://127.0.0.1:8000/"
+    sep="&" if "?" in base_url else "?"
+    launch_url=f"{base_url}{sep}auth={quote(make_launch_auth(user_id))}"
     return ReplyKeyboardMarkup(keyboard=[[
-        KeyboardButton(text="🚀 Tizimni ochish",web_app=WebAppInfo(url=(WEBAPP_URL or "http://127.0.0.1:8000/")))
+        KeyboardButton(text="🚀 Tizimni ochish",web_app=WebAppInfo(url=launch_url))
     ]],resize_keyboard=True)
 
 def cyr(text:str)->str:
@@ -185,9 +213,8 @@ async def index():
     return FileResponse("static/index.html")
 
 @app.post("/api/register")
-async def register(init_data: str = Form(...), fio: str = Form(...)):
-    user=verify_init_data(init_data)
-    tid=int(user["id"])
+async def register(fio:str=Form(...),init_data:str=Form(""),auth:str=Form("")):
+    tid=resolve_user_id(init_data,auth)
     db.upsert_user(tid,fio,user.get("username"),"pending")
     await bot.send_message(SUPER_ADMIN_ID,
         f"🆕 YANGI FOYDALANUVCHI\n\n👤 F.I.Sh.: {fio}\n🆔 Telegram ID: {tid}",
@@ -195,20 +222,19 @@ async def register(init_data: str = Form(...), fio: str = Form(...)):
     return {"ok":True,"status":"pending"}
 
 @app.get("/api/me")
-async def me(init_data:str):
-    user=verify_init_data(init_data)
-    row=db.get_user(int(user["id"]))
+async def me(init_data:str="",auth:str=""):
+    tid=resolve_user_id(init_data,auth)
+    row=db.get_user(tid)
     return {"user":row}
 
 @app.post("/api/submit")
 async def submit(
-    init_data:str=Form(...), payload:str=Form(...),
+    payload:str=Form(...), init_data:str=Form(""), auth:str=Form(""),
     passport_front:UploadFile|None=File(None),
     passport_back:UploadFile|None=File(None),
     extra_document:UploadFile|None=File(None),
 ):
-    user=verify_init_data(init_data)
-    tid=int(user["id"])
+    tid=resolve_user_id(init_data,auth)
     u=db.get_user(tid)
     if not u or u["status"]!="approved":
         raise HTTPException(403,"Foydalanuvchi tasdiqlanmagan")
@@ -235,18 +261,18 @@ async def submit(
     return {"ok":True,"record_id":rid}
 
 @app.get("/api/search/{card}")
-async def search(card:str, init_data:str):
-    user=verify_init_data(init_data)
-    u=db.get_user(int(user["id"]))
+async def search(card:str,init_data:str="",auth:str=""):
+    tid=resolve_user_id(init_data,auth)
+    u=db.get_user(tid)
     if not u or u["status"]!="approved":
         raise HTTPException(403,"Ruxsat yo'q")
     row=db.find_by_card(card)
     return {"record":row}
 
 @app.get("/api/report")
-async def report(init_data:str):
-    user=verify_init_data(init_data)
-    u=db.get_user(int(user["id"]))
+async def report(init_data:str="",auth:str=""):
+    tid=resolve_user_id(init_data,auth)
+    u=db.get_user(tid)
     if not u or u["status"]!="approved":
         raise HTTPException(403,"Ruxsat yo'q")
     return db.report()
@@ -256,18 +282,18 @@ async def start(message:Message):
     uid=message.from_user.id
     u=db.get_user(uid)
     if u and u["status"]=="approved":
-        await message.answer(f"Assalomu alaykum, {u['fio']}!",reply_markup=app_keyboard())
+        await message.answer(f"Assalomu alaykum, {u['fio']}!",reply_markup=app_keyboard(uid))
     elif u and u["status"]=="pending":
         await message.answer("⏳ So'rovingiz admin tasdig'ini kutmoqda.")
     else:
-        await message.answer("Ro'yxatdan o'tish uchun quyidagi tugmani bosing.",reply_markup=app_keyboard())
+        await message.answer("Ro'yxatdan o'tish uchun quyidagi tugmani bosing.",reply_markup=app_keyboard(uid))
 
 @router.callback_query(F.data.startswith("ua:"))
 async def user_approve(cb:CallbackQuery):
     if cb.from_user.id!=SUPER_ADMIN_ID:
         return await cb.answer("Faqat Super Admin",show_alert=True)
     uid=int(cb.data.split(":")[1]); db.set_user_status(uid,"approved")
-    await bot.send_message(uid,"✅ Ro'yxatdan o'tishingiz tasdiqlandi.",reply_markup=app_keyboard())
+    await bot.send_message(uid,"✅ Ro'yxatdan o'tishingiz tasdiqlandi.",reply_markup=app_keyboard(uid))
     await cb.message.edit_text(cb.message.text+"\n\n🟢 TASDIQLANDI"); await cb.answer()
 
 @router.callback_query(F.data.startswith("ur:"))
