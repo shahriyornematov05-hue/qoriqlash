@@ -1,0 +1,22 @@
+TO‘LIQ DEPLOY-TAYYOR PAKET
+
+KOMPYUTERDA SINASH:
+1. ISHGA_TUSHIRISH.bat ni bosing.
+2. Brauzerda http://127.0.0.1:8000/ ochiladi.
+3. Bu lokal sinov; Telegram Mini App uchun HTTPS server kerak.
+
+RENDER'GA JOYLASH:
+1. GitHub'da yangi repository yarating.
+2. Shu papkadagi BARCHA fayllarni repository'ga yuklang.
+3. Render.com ga kiring.
+4. New + -> Blueprint ni tanlang.
+5. GitHub repository'ni ulang.
+6. Render render.yaml faylini o'zi topadi.
+7. BOT_TOKEN qiymatini Render ichida Secret sifatida kiriting.
+8. Deploy tugagach HTTPS manzil avtomatik hosil bo'ladi.
+9. Bot /start tugmasida shu manzil avtomatik ishlatiladi.
+
+MUHIM:
+- Bot kanalga administrator bo‘lishi kerak.
+- Xabar yuborish va xabar tahrirlash huquqlari berilsin.
+- Token chatda oshkor bo‘lgan. Ishga tushirgach BotFather orqali almashtiring.

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: qoriqlash-ulash-tizimi
+    env: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: CHANNEL_ID
+        value: "-1003982845920"
+      - key: SUPER_ADMIN_ID
+        value: "8557804362"
+      - key: APPROVER_IDS
+        value: "8557804362"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "8000"
