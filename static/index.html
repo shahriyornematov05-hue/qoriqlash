@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qo‘riqlash xizmatiga ulash</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#172033}.top{background:#0d47a1;color:#fff;padding:18px}.wrap{max-width:760px;margin:auto;padding:14px}.card{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 6px 20px #0001}.hidden{display:none}button{padding:13px;border:0;border-radius:10px;font-weight:700;cursor:pointer}.green{background:#19a65a;color:#fff;width:100%}.blue{background:#1565c0;color:#fff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:block;margin:12px 0;font-weight:700}input,select{width:100%;padding:12px;border:1px solid #dbe4f0;border-radius:10px;box-sizing:border-box}.radio{display:flex;gap:18px}.radio input{width:auto}.fixed{background:#eef6ff;padding:12px;border-radius:10px}.msg{padding:10px;border-radius:10px;background:#fff6cc}.menu button{width:100%;margin:6px 0}.files input{margin-top:6px}@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top"><b>🛡️ Qo‘riqlash xizmatiga ulash tizimi</b><div>Bektemir tumani</div></div>
+<div class="wrap">
+<section id="login" class="card">
+<h2>Xush kelibsiz</h2>
+<label>F.I.Sh.<input id="regfio" placeholder="Familiya Ism Sharif"></label>
+<button class="green" onclick="registerUser()">Ro‘yxatdan o‘tish</button>
+<p id="loginmsg"></p>
+</section>
+
+<section id="home" class="card hidden menu">
+<h2>Bosh sahifa</h2>
+<button class="blue" onclick="show('choose')">➕ Yangi ulash</button>
+<button class="blue" onclick="show('search')">🔍 Qidiruv</button>
+<button class="blue" onclick="loadReport()">📊 Hisobot</button>
+</section>
+
+<section id="choose" class="card hidden">
+<h2>Yangi ulash</h2>
+<div class="grid"><button class="blue" onclick="show('object')">🏢 Obyekt</button><button class="blue" onclick="show('house')">🏠 Xonadon</button></div>
+<button onclick="show('home')">Orqaga</button>
+</section>
+
+<form id="object" class="card hidden" onsubmit="submitForm(event,'object')">
+<h2>🏢 Obyekt</h2>
+<div class="radio"><label><input type="radio" name="device_type" value="TEKO" required>TEKO</label><label><input type="radio" name="device_type" value="PRITOK" required>PRITOK</label></div>
+<div class="grid">
+<label>Karta raqami<input name="card_number" required></label>
+<label>Tashkilot turi<select name="org_type" required><option></option><option>МЧЖ</option><option>YTT</option><option>OK</option><option>XK</option></select></label>
+<label>Obyekt nomi<input name="object_name" required></label>
+<label>Obyekt turi<input name="object_type" required></label>
+<label>Ko‘chadagi nomi<input name="street_name" required></label>
+<label>Obyekt rahbari<input name="manager" required></label>
+<label>Telefon +998<input name="phone" required></label>
+</div>
+<div class="fixed">Tuman: <b>Bektemir tumani</b></div>
+<div class="grid">
+<label>MFY<input name="mfy" required></label><label>Ko‘cha<input name="street" required></label>
+<label>Uy raqami<input name="house_number" required></label><label>Mo‘ljal<input name="landmark"></label>
+<label>GOM<select name="gom" required><option></option><option>GOM-1</option><option>GOM-2</option><option>GOM-3</option><option>GOM-4</option></select></label>
+<label>Pult<select name="pult" required><option></option><option>Bektemir РТОР-1</option><option>Bektemir РТОР-2</option><option>Bektemir РТОР-3</option><option>Bektemir РТОР-4</option></select></label>
+<label>Aparat SIM +998<input name="sim" required></label><label>Aparat raqami<input name="device_number" required></label>
+<label>Elektrik<input name="electrician" required></label>
+<label>TQM boshlig‘i<select name="tqm_head" required><option></option><option>1-TQM — Qozoqboyev Akbar</option><option>2-TQM — Ermonov Nuxridin</option><option>3-TQM — Safarov Baxrom</option><option>4-TQM — Mamatov Xusan</option></select></label>
+</div>
+<div class="files"><label>Pasport oldi<input type="file" name="passport_front"></label><label>Pasport orqasi<input type="file" name="passport_back"></label><label>Qo‘shimcha hujjat<input type="file" name="extra_document"></label></div>
+<button type="button" class="blue" onclick="gps(this)">📍 Joylashuvni olish</button><input type="hidden" name="latitude"><input type="hidden" name="longitude"><span class="gpsmsg"></span>
+<button class="green">📤 Yuborish</button><button type="button" onclick="show('home')">Orqaga</button>
+</form>
+
+<form id="house" class="card hidden" onsubmit="submitForm(event,'house')">
+<h2>🏠 Xonadon</h2>
+<div class="radio">
+<label><input type="radio" name="device_type" value="KTS" required onchange="simToggle(this)">KTS</label>
+<label><input type="radio" name="device_type" value="TEKO" required onchange="simToggle(this)">TEKO</label>
+<label><input type="radio" name="device_type" value="PRITOK" required onchange="simToggle(this)">PRITOK</label>
+</div>
+<div class="grid">
+<label>Karta/KTS raqami<input name="card_number" required></label><label>F.I.Sh.<input name="fio" required></label>
+<label>Telefon +998<input name="phone" required></label>
+</div>
+<div class="fixed">Tuman: <b>Bektemir tumani</b></div>
+<div class="grid">
+<label>MFY<input name="mfy" required></label><label>Ko‘cha<input name="street" required></label>
+<label>Uy raqami<input name="house_number" required></label><label>Xonadon<input name="apartment" required></label>
+<label>Pod’ezd<input name="entrance"></label><label>Qavat<input name="floor"></label><label>Uy qavati<input name="building_floors"></label><label>Mo‘ljal<input name="landmark"></label>
+<label>GOM<select name="gom" required><option></option><option>GOM-1</option><option>GOM-2</option><option>GOM-3</option><option>GOM-4</option></select></label>
+<label>Pult<select name="pult" required><option></option><option>Bektemir РТОР-1</option><option>Bektemir РТОР-2</option><option>Bektemir РТОР-3</option><option>Bektemir РТОР-4</option></select></label>
+<label id="hsim">Aparat SIM +998<input name="sim"></label><label>Aparat raqami<input name="device_number" required></label>
+<label>Elektrik<input name="electrician" required></label><label>TQM boshlig‘i<select name="tqm_head" required><option></option><option>1-TQM — Qozoqboyev Akbar</option><option>2-TQM — Ermonov Nuxridin</option><option>3-TQM — Safarov Baxrom</option><option>4-TQM — Mamatov Xusan</option></select></label>
+</div>
+<div class="files"><label>Pasport oldi<input type="file" name="passport_front"></label><label>Pasport orqasi<input type="file" name="passport_back"></label><label>Qo‘shimcha hujjat<input type="file" name="extra_document"></label></div>
+<button type="button" class="blue" onclick="gps(this)">📍 Joylashuvni olish</button><input type="hidden" name="latitude"><input type="hidden" name="longitude"><span class="gpsmsg"></span>
+<button class="green">📤 Yuborish</button><button type="button" onclick="show('home')">Orqaga</button>
+</form>
+
+<section id="search" class="card hidden"><h2>🔍 Qidiruv</h2><label>Karta raqami<input id="cardSearch"></label><button class="blue" onclick="doSearch()">Qidirish</button><pre id="searchOut"></pre><button onclick="show('home')">Orqaga</button></section>
+<section id="report" class="card hidden"><h2>📊 Hisobot</h2><pre id="reportOut"></pre><button onclick="show('home')">Orqaga</button></section>
+</div>
+<script>
+const tg=window.Telegram.WebApp; tg.ready(); tg.expand(); const initData=tg.initData;
+function show(id){document.querySelectorAll('section,form').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden')}
+async function api(url,opt={}){const r=await fetch(url,opt);if(!r.ok)throw new Error(await r.text());return r.json()}
+async function boot(){try{const x=await api('/api/me?init_data='+encodeURIComponent(initData));if(x.user&&x.user.status==='approved')show('home');else show('login')}catch(e){show('login')}}
+async function registerUser(){const f=new FormData();f.append('init_data',initData);f.append('fio',document.getElementById('regfio').value);try{await api('/api/register',{method:'POST',body:f});document.getElementById('loginmsg').textContent='So‘rov yuborildi. Admin tasdiqlashi kutilmoqda.'}catch(e){alert(e.message)}}
+function simToggle(r){const w=document.getElementById('hsim');w.style.display=r.value==='KTS'?'none':'block';w.querySelector('input').required=r.value!=='KTS'}
+function gps(btn){const form=btn.closest('form'),m=form.querySelector('.gpsmsg');navigator.geolocation.getCurrentPosition(p=>{form.latitude.value=p.coords.latitude;form.longitude.value=p.coords.longitude;m.textContent=' ✅ Joylashuv olindi'},()=>alert('GPSga ruxsat bering'),{enableHighAccuracy:true})}
+async function submitForm(e,type){e.preventDefault();const form=e.target,fd=new FormData(form),obj=Object.fromEntries(fd.entries());obj.record_type=type;const files=['passport_front','passport_back','extra_document'];const out=new FormData();out.append('init_data',initData);out.append('payload',JSON.stringify(obj));files.forEach(n=>{const f=form.querySelector('[name='+n+']').files[0];if(f)out.append(n,f)});try{await api('/api/submit',{method:'POST',body:out});alert('Kanalga JARAYONDA holatida yuborildi');form.reset();show('home')}catch(err){alert(err.message)}}
+async function doSearch(){try{const x=await api('/api/search/'+encodeURIComponent(cardSearch.value)+'?init_data='+encodeURIComponent(initData));searchOut.textContent=x.record?x.record.current_text:'Topilmadi'}catch(e){alert(e.message)}}
+async function loadReport(){show('report');try{reportOut.textContent=JSON.stringify(await api('/api/report?init_data='+encodeURIComponent(initData)),null,2)}catch(e){reportOut.textContent=e.message}}
+boot();
+</script>
+</body></html>
